@@ -17,7 +17,7 @@
 
 #define USAGE_STR	"usage: %s <server_address> <port> [<pmem-path>] [direct-pmem-write]\n"
 #define ON_STR		"on"
-#define INIT_STR	"Initial server string"
+#define INIT_STR	"This is the initial server string."
 
 int
 main(int argc, char *argv[])
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 	char *data_ptr = (char *)mr_ptr + data_offset;
 	/* mr_size - data_offset >= KILOBYTE */
 	strncpy(data_ptr, INIT_STR, KILOBYTE);
-	(void) printf("Old value: %s\n", data_ptr);
+	(void) printf("The initial content of the server's memory: %s\n", data_ptr);
 
 	/* create a peer configuration structure */
 	ret = rpma_peer_cfg_new(&pcfg);
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 	if (ret)
 		goto err_mr_dereg;
 
-	(void) printf("New value: %s\n", data_ptr);
+	(void) printf("Received a new data from the client: %s\n", data_ptr);
 
 err_mr_dereg:
 	/* deregister the memory region */

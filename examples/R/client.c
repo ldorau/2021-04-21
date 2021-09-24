@@ -15,43 +15,10 @@
 
 #include "connection.h"
 
-#define USAGE_STR "usage: %s <server_address> <port>\n"
+#define USAGE_STR	"usage: %s <server_address> <port>\n"
+#define FLUSH_ID	(void *)0xF01D /* a random identifier */
 
-#define HELLO_STR_SIZE 1024
-
-enum lang_t {en, es};
-
-struct hello_t {
-	enum lang_t lang;
-	char str[HELLO_STR_SIZE];
-};
-
-static const char *hello_str[] = {
-	[en] = "Hello world!",
-	[es] = "¡Hola Mundo!"
-};
-
-#define HELLO_STR_OFFSET	offsetof(struct hello_t, str)
-#define HELLO_T_SIZE		(sizeof(struct hello_t))
-#define LANG_NUM		(sizeof(hello_str) / sizeof(hello_str[0]))
-
-#define FLUSH_ID		(void *)0xF01D /* a random identifier */
-
-static inline void
-write_hello_str(struct hello_t *hello, enum lang_t lang)
-{
-	hello->lang = lang;
-	strncpy(hello->str, hello_str[hello->lang], HELLO_STR_SIZE - 1);
-	hello->str[HELLO_STR_SIZE - 1] = '\0';
-}
-
-static void
-translate(struct hello_t *hello)
-{
-	printf("translating...\n");
-	enum lang_t lang = (enum lang_t)((hello->lang + 1) % LANG_NUM);
-	write_hello_str(hello, lang);
-}
+static const char *hello_str = "This is the message sent by the client to the server.";
 
 int
 main(int argc, char *argv[])
@@ -88,7 +55,7 @@ main(int argc, char *argv[])
 	bool direct_write_to_pmem = false;
 	enum rpma_flush_type flush_type;
 
-	local_mr_size = sizeof(struct hello_t);
+	local_mr_size = KILOBYTE;
 	local_mr_ptr = malloc_aligned(local_mr_size);
 	if (local_mr_ptr == NULL)
 		return -1;
@@ -190,13 +157,12 @@ main(int argc, char *argv[])
 			(char *)local_mr_ptr + local_offset);
 
 	/* write the next value */
-	struct hello_t *hello = local_mr_ptr;
-	write_hello_str(hello, en);
-	(void) printf("Writing the message: %s\n", hello->str);
+	strncpy(local_mr_ptr, hello_str, KILOBYTE);
+	(void) printf("Writing the message: %s\n", (char *)local_mr_ptr);
 
 	remote_offset = remote_data->data_offset;
-	ret = rpma_write(conn, remote_mr, remote_offset, local_mr,
-			(local_offset + offsetof(struct hello_t, str)), KILOBYTE,
+	ret = rpma_write(conn, remote_mr, remote_offset,
+			local_mr, local_offset, KILOBYTE,
 			RPMA_F_COMPLETION_ON_ERROR, NULL);
 	if (ret)
 		goto err_mr_remote_delete;
@@ -240,14 +206,6 @@ main(int argc, char *argv[])
 				ibv_wc_status_str(cmpl.op_status));
 		goto err_mr_remote_delete;
 	}
-
-	/*
-	 * Translate the message so the next time the greeting will be
-	 * surprising.
-	 */
-	translate(hello);
-
-	(void) printf("Translation: %s\n", hello->str);
 
 err_mr_remote_delete:
 	/* delete the remote memory region's structure */

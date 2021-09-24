@@ -11,6 +11,8 @@
 #include <string.h>
 #include <librpma.h>
 
+#define KILOBYTE 1024
+
 /* signature marking the persistent contents as valid */
 #define SIGNATURE_STR "RPMA_EXAMPLE_SIG"
 #define SIGNATURE_LEN (strlen(SIGNATURE_STR) + 1)
@@ -30,8 +32,6 @@ struct common_data {
 	/* buffer containing mr_desc and pcfg_desc */
 	char descriptors[DESCRIPTORS_MAX_SIZE];
 };
-
-#define KILOBYTE 1024
 
 void *malloc_aligned(size_t size);
 
