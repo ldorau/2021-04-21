@@ -93,13 +93,13 @@ main(int argc, char *argv[])
 	/* create a peer configuration structure */
 	ret = rpma_peer_cfg_new(&pcfg);
 	if (ret)
-		goto err_free;
+		goto err_unmap;
 
 	/* configure peer's direct write to pmem support */
 	ret = rpma_peer_cfg_set_direct_write_to_pmem(pcfg, true);
 	if (ret) {
 		(void) rpma_peer_cfg_delete(&pcfg);
-		goto err_free;
+		goto err_unmap;
 	}
 
 	/*
@@ -117,8 +117,7 @@ main(int argc, char *argv[])
 	/* register the memory */
 	ret = rpma_mr_reg(peer, mr_ptr, mr_size,
 			RPMA_MR_USAGE_READ_SRC | RPMA_MR_USAGE_WRITE_DST |
-			(is_pmem ? (RPMA_MR_USAGE_FLUSH_TYPE_PERSISTENT |
-				RPMA_MR_USAGE_FLUSH_TYPE_VISIBILITY) :
+			(RPMA_MR_USAGE_FLUSH_TYPE_PERSISTENT |
 				RPMA_MR_USAGE_FLUSH_TYPE_VISIBILITY),
 			&mr);
 	if (ret)
@@ -192,14 +191,8 @@ err_peer_delete:
 err_pcfg_delete:
 	(void) rpma_peer_cfg_delete(&pcfg);
 
-err_free:
-	if (is_pmem) {
-		pmem_unmap(mr_ptr, mr_size);
-		mr_ptr = NULL;
-	}
-
-	if (mr_ptr != NULL)
-		free(mr_ptr);
+err_unmap:
+	(void) pmem_unmap(mr_ptr, mr_size);
 
 	return ret;
 }
