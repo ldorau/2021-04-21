@@ -5,7 +5,7 @@
 #
 
 cmake_minimum_required(VERSION 3.3)
-project(flush-to-persistent C)
+project(exampleR C)
 
 set(LIBPMEM_REQUIRED_VERSION 1.6)
 

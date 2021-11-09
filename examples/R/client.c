@@ -3,7 +3,7 @@
 /* Copyright 2021, Fujitsu */
 
 /*
- * client.c -- a client of the flush-to-persistent example
+ * client.c -- a client of the "read, write and flush to persistent domain" example
  */
 
 #include <inttypes.h>
