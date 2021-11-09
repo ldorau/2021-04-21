@@ -2,7 +2,7 @@
 /* Copyright 2020-2021, Intel Corporation */
 
 /*
- * server.c -- a server of the flush-to-persistent example
+ * server.c -- a server of the "read, write and flush to persistent domain" example
  */
 
 #include <stdlib.h>
