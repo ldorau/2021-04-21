@@ -78,7 +78,6 @@ main(int argc, char *argv[])
 	struct rpma_peer *peer = NULL;
 	struct rpma_conn *conn = NULL;
 	bool direct_write_to_pmem = false;
-	enum rpma_flush_type flush_type;
 
 	local_mr_size = KILOBYTE;
 	local_mr_ptr = malloc_aligned(local_mr_size);
@@ -127,6 +126,13 @@ main(int argc, char *argv[])
 	/* either get or apply failed */
 	if (ret)
 		goto err_mr_dereg;
+
+	/* verify the Direct Write to PMem support */
+	if (!direct_write_to_pmem) {
+		(void) fprintf(stderr,
+			"Error: the server does not support Direct Write to PMem\n");
+		goto err_mr_dereg;
+	}
 
 	/*
 	 * Create a remote memory registration structure from the received
@@ -193,17 +199,8 @@ main(int argc, char *argv[])
 	if (ret)
 		goto err_mr_remote_delete;
 
-	/* determine the flush type */
-	if (direct_write_to_pmem) {
-		printf("RPMA_FLUSH_TYPE_PERSISTENT is supported\n");
-		flush_type = RPMA_FLUSH_TYPE_PERSISTENT;
-	} else {
-		printf(
-			"RPMA_FLUSH_TYPE_PERSISTENT is NOT supported, RPMA_FLUSH_TYPE_VISIBILITY is used instead\n");
-		flush_type = RPMA_FLUSH_TYPE_VISIBILITY;
-	}
-
-	ret = rpma_flush(conn, remote_mr, remote_offset, KILOBYTE, flush_type,
+	ret = rpma_flush(conn, remote_mr, remote_offset, KILOBYTE,
+			RPMA_FLUSH_TYPE_PERSISTENT,
 			RPMA_F_COMPLETION_ALWAYS, FLUSH_ID);
 	if (ret)
 		goto err_mr_remote_delete;
