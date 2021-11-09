@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <libpmem.h>
 #include <librpma.h>
-#include "connection.h"
+#include "common.h"
 
 #define USAGE_STR	"usage: %s <server_address> <port> <pmem-path> <user-id>\n"
 #define INIT_STR	"This is the initial server string."
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	/*
 	 * lookup an ibv_context via the address and create a new peer using it
 	 */
-	ret = server_peer_via_address(addr, &peer);
+	ret = common_server_peer_via_address(addr, &peer);
 	if (ret)
 		goto err_pcfg_delete;
 
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 	struct rpma_conn_private_data pdata;
 	pdata.ptr = &data;
 	pdata.len = sizeof(struct common_data);
-	ret = server_accept_connection(ep, NULL, &pdata, &conn);
+	ret = common_server_accept_connection(ep, NULL, &pdata, &conn);
 	if (ret)
 		goto err_mr_dereg;
 

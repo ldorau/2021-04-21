@@ -2,14 +2,14 @@
 /* Copyright 2020-2021, Intel Corporation */
 
 /*
- * connection.c -- connection functions
+ * common.c -- common functions used by the example R
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "connection.h"
+#include "common.h"
 
 /*
  * common_peer_via_address -- create a new RPMA peer based on ibv_context
@@ -30,12 +30,13 @@ common_peer_via_address(const char *addr, enum rpma_util_ibv_context_type type,
 }
 
 /*
- * client_connect -- establish a new connection to a server listening at
+ * common_client_connect -- establish a new connection to a server listening at
  * addr:port
  */
 int
-client_connect(struct rpma_peer *peer, const char *addr, const char *port,
-		struct rpma_conn_cfg *cfg, struct rpma_conn_private_data *pdata,
+common_client_connect(struct rpma_peer *peer, const char *addr,
+		const char *port, struct rpma_conn_cfg *cfg,
+		struct rpma_conn_private_data *pdata,
 		struct rpma_conn **conn_ptr)
 {
 	struct rpma_conn_req *req = NULL;
@@ -74,11 +75,11 @@ err_conn_delete:
 }
 
 /*
- * server_accept_connection -- wait for an incoming connection request,
+ * common_server_accept_connection -- wait for an incoming connection request,
  * accept it and wait for its establishment
  */
 int
-server_accept_connection(struct rpma_ep *ep, struct rpma_conn_cfg *cfg,
+common_server_accept_connection(struct rpma_ep *ep, struct rpma_conn_cfg *cfg,
 		struct rpma_conn_private_data *pdata,
 		struct rpma_conn **conn_ptr)
 {

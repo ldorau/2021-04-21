@@ -2,11 +2,11 @@
 /* Copyright 2020-2021, Intel Corporation */
 
 /*
- * connection.h -- connection functions declarations
+ * common.h -- common functions declarations for the example R
  */
 
-#ifndef EXAMPLES_COMMON
-#define EXAMPLES_COMMON
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <string.h>
 #include <librpma.h>
@@ -30,23 +30,24 @@ int common_peer_via_address(const char *addr,
 		enum rpma_util_ibv_context_type type,
 		struct rpma_peer **peer_ptr);
 
-#define client_peer_via_address(addr, peer_ptr) \
+#define common_client_peer_via_address(addr, peer_ptr) \
 		common_peer_via_address(addr, RPMA_UTIL_IBV_CONTEXT_REMOTE, \
-				peer_ptr)
+		peer_ptr)
 
-#define server_peer_via_address(addr, peer_ptr) \
+#define common_server_peer_via_address(addr, peer_ptr) \
 		common_peer_via_address(addr, RPMA_UTIL_IBV_CONTEXT_LOCAL, \
-				peer_ptr)
+		peer_ptr)
 
-int client_connect(struct rpma_peer *peer, const char *addr, const char *port,
-		struct rpma_conn_cfg *cfg, struct rpma_conn_private_data *pdata,
+int common_client_connect(struct rpma_peer *peer, const char *addr,
+		const char *port, struct rpma_conn_cfg *cfg,
+		struct rpma_conn_private_data *pdata,
 		struct rpma_conn **conn_ptr);
 
-int server_accept_connection(struct rpma_ep *ep, struct rpma_conn_cfg *cfg,
-		struct rpma_conn_private_data *pdata,
+int common_server_accept_connection(struct rpma_ep *ep,
+		struct rpma_conn_cfg *cfg, struct rpma_conn_private_data *pdata,
 		struct rpma_conn **conn_ptr);
 
 int common_wait_for_conn_close_and_disconnect(struct rpma_conn **conn_ptr);
 int common_disconnect_and_wait_for_conn_close(struct rpma_conn **conn_ptr);
 
-#endif /* EXAMPLES_COMMON */
+#endif /* COMMON_H */

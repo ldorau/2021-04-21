@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <librpma.h>
 #include <unistd.h>
-#include "connection.h"
+#include "common.h"
 
 #define USAGE_STR	"usage: %s <server_address> <port>\n"
 #define FLUSH_ID	(void *)0xF01D /* a random identifier */
@@ -86,12 +86,12 @@ main(int argc, char *argv[])
 	/*
 	 * lookup an ibv_context via the address and create a new peer using it
 	 */
-	ret = client_peer_via_address(addr, &peer);
+	ret = common_client_peer_via_address(addr, &peer);
 	if (ret)
 		goto err_free;
 
 	/* establish a new connection to a server listening at addr:port */
-	ret = client_connect(peer, addr, port, NULL, NULL, &conn);
+	ret = common_client_connect(peer, addr, port, NULL, NULL, &conn);
 	if (ret)
 		goto err_peer_delete;
 

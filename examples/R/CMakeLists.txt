@@ -63,10 +63,10 @@ function(add_example name)
 	target_link_libraries(${name} rpma ${LIBIBVERBS_LIBRARIES} ${LIBRT_LIBRARIES} ${LIBPMEM_LIBRARIES})
 endfunction()
 
-add_example(server server.c connection.c)
-add_example(client client.c connection.c)
-add_example(simple_server simple_server.c connection.c)
-add_example(simple_client simple_client.c connection.c)
+add_example(server server.c common.c)
+add_example(client client.c common.c)
+add_example(simple_server simple_server.c common.c)
+add_example(simple_client simple_client.c common.c)
 
 add_custom_target(config_softroce
 	COMMAND ${CMAKE_SOURCE_DIR}/tools/config_softroce.sh)

@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 #include <librpma.h>
-#include "connection.h"
+#include "common.h"
 
 #define USAGE_STR "usage: %s <server_address> <port>\n"
 
@@ -37,7 +37,7 @@ main(int argc, char *argv[])
 	/*
 	 * lookup an ibv_context via the address and create a new peer using it
 	 */
-	ret = server_peer_via_address(addr, &peer);
+	ret = common_server_peer_via_address(addr, &peer);
 	if (ret)
 		return ret;
 
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
 	 * Wait for an incoming connection request, accept it and wait for its
 	 * establishment.
 	 */
-	ret = server_accept_connection(ep, NULL, &pdata, &conn);
+	ret = common_server_accept_connection(ep, NULL, &pdata, &conn);
 	if (ret)
 		goto err_ep_shutdown;
 
