@@ -33,7 +33,8 @@ malloc_aligned(size_t size)
 	void *mem;
 	int ret = posix_memalign(&mem, (size_t)pagesize, size);
 	if (ret) {
-		(void) fprintf(stderr, "posix_memalign: %s\n", strerror(ret));
+		(void) fprintf(stderr, "Client: error: posix_memalign: %s\n",
+				strerror(ret));
 		return NULL;
 	}
 
@@ -128,7 +129,7 @@ main(int argc, char *argv[])
 	/* verify the Direct Write to PMem support */
 	if (!direct_write_to_pmem) {
 		(void) fprintf(stderr,
-			"Error: the server does not support Direct Write to PMem\n");
+			"Client: error: the server does not support Direct Write to PMem\n");
 		goto err_mr_dereg;
 	}
 
@@ -147,7 +148,7 @@ main(int argc, char *argv[])
 		goto err_mr_remote_delete;
 	} else if (remote_size < KILOBYTE) {
 		fprintf(stderr,
-			"Remote memory region size too small for writing the data of the assumed size (%zu < %d)\n",
+			"Client: error: remote memory region size too small for writing the data of the assumed size (%zu < %d)\n",
 			remote_size, KILOBYTE);
 		goto err_mr_remote_delete;
 	}
@@ -172,36 +173,45 @@ main(int argc, char *argv[])
 
 	if (cmpl.op_status != IBV_WC_SUCCESS) {
 		ret = -1;
-		(void) fprintf(stderr, "rpma_read() failed: %s\n",
+		(void) fprintf(stderr, "Client: error: rpma_read() failed: %s\n",
 				ibv_wc_status_str(cmpl.op_status));
 		goto err_mr_remote_delete;
 	}
 
 	if (cmpl.op != RPMA_OP_READ) {
 		ret = -1;
-		(void) fprintf(stderr, "unexpected cmpl.op value (%d != %d)\n",
+		(void) fprintf(stderr, "Client: error: unexpected cmpl.op value (%d != %d)\n",
 				cmpl.op, RPMA_OP_READ);
 		goto err_mr_remote_delete;
 	}
 
-	(void) fprintf(stdout, "The initial content of the server memory (just read): %s\n",
+	(void) fprintf(stdout, "Client: read the initial content of the remote (server's) persistent memory: %s\n",
 			(char *)local_mr_ptr + local_offset);
 
 	/* write the next value */
 	strncpy(local_mr_ptr, hello_str, KILOBYTE);
-	(void) printf("Writing the message: %s\n", (char *)local_mr_ptr);
+	(void) printf("Client: writing to the remote (server's) persistent memory: %s\n",
+			(char *)local_mr_ptr);
 
 	ret = rpma_write(conn, remote_mr, remote_offset,
 			local_mr, local_offset, KILOBYTE,
 			RPMA_F_COMPLETION_ON_ERROR, NULL);
-	if (ret)
+	if (ret) {
+		(void) fprintf(stderr, "Client: error: rpma_write() failed: %s\n",
+				rpma_err_2str(ret));
 		goto err_mr_remote_delete;
+	}
+
+	(void) printf("Client: flushing the remote data to the persistent domain...\n");
 
 	ret = rpma_flush(conn, remote_mr, remote_offset, KILOBYTE,
 			RPMA_FLUSH_TYPE_PERSISTENT,
 			RPMA_F_COMPLETION_ALWAYS, FLUSH_ID);
-	if (ret)
+	if (ret) {
+		(void) fprintf(stderr, "Client: error: rpma_flush() failed: %s\n",
+				rpma_err_2str(ret));
 		goto err_mr_remote_delete;
+	}
 
 	/* wait for the completion to be ready */
 	ret = rpma_conn_completion_wait(conn);
@@ -215,7 +225,7 @@ main(int argc, char *argv[])
 	if (cmpl.op_context != FLUSH_ID) {
 		ret = -1;
 		(void) fprintf(stderr,
-				"unexpected cmpl.op_context value "
+				"Client: error: unexpected cmpl.op_context value "
 				"(0x%" PRIXPTR " != 0x%" PRIXPTR ")\n",
 				(uintptr_t)cmpl.op_context,
 				(uintptr_t)FLUSH_ID);
@@ -223,7 +233,7 @@ main(int argc, char *argv[])
 	}
 	if (cmpl.op_status != IBV_WC_SUCCESS) {
 		ret = -1;
-		(void) fprintf(stderr, "rpma_flush() failed: %s\n",
+		(void) fprintf(stderr, "Client: error: rpma_flush() failed: %s\n",
 				ibv_wc_status_str(cmpl.op_status));
 		goto err_mr_remote_delete;
 	}
