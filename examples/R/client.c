@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	/* verify the Direct Write to PMem support */
 	if (!direct_write_to_pmem) {
 		(void) fprintf(stderr,
-			"Error: the server does not support Direct Write to PMem\n");
+			"Client: error: the server does not support Direct Write to PMem\n");
 		goto err_mr_dereg;
 	}
 
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		goto err_mr_remote_delete;
 	} else if (remote_size < KILOBYTE) {
 		fprintf(stderr,
-			"Remote memory region size too small for writing the data of the assumed size (%zu < %d)\n",
+			"Client: remote memory region size too small for writing the data of the assumed size (%zu < %d)\n",
 			remote_size, KILOBYTE);
 		goto err_mr_remote_delete;
 	}
@@ -172,24 +172,24 @@ main(int argc, char *argv[])
 
 	if (cmpl.op_status != IBV_WC_SUCCESS) {
 		ret = -1;
-		(void) fprintf(stderr, "rpma_read() failed: %s\n",
+		(void) fprintf(stderr, "Client: rpma_read() failed: %s\n",
 				ibv_wc_status_str(cmpl.op_status));
 		goto err_mr_remote_delete;
 	}
 
 	if (cmpl.op != RPMA_OP_READ) {
 		ret = -1;
-		(void) fprintf(stderr, "unexpected cmpl.op value (%d != %d)\n",
+		(void) fprintf(stderr, "Client: unexpected cmpl.op value (%d != %d)\n",
 				cmpl.op, RPMA_OP_READ);
 		goto err_mr_remote_delete;
 	}
 
-	(void) fprintf(stdout, "The initial content of the server memory (just read): %s\n",
+	(void) fprintf(stdout, "Client: the initial content of the server memory (just read): %s\n",
 			(char *)local_mr_ptr + local_offset);
 
 	/* write the next value */
 	strncpy(local_mr_ptr, hello_str, KILOBYTE);
-	(void) printf("Writing the message: %s\n", (char *)local_mr_ptr);
+	(void) printf("Client: writing the message: %s\n", (char *)local_mr_ptr);
 
 	ret = rpma_write(conn, remote_mr, remote_offset,
 			local_mr, local_offset, KILOBYTE,
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 	if (cmpl.op_context != FLUSH_ID) {
 		ret = -1;
 		(void) fprintf(stderr,
-				"unexpected cmpl.op_context value "
+				"Client: unexpected cmpl.op_context value "
 				"(0x%" PRIXPTR " != 0x%" PRIXPTR ")\n",
 				(uintptr_t)cmpl.op_context,
 				(uintptr_t)FLUSH_ID);
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 	}
 	if (cmpl.op_status != IBV_WC_SUCCESS) {
 		ret = -1;
-		(void) fprintf(stderr, "rpma_flush() failed: %s\n",
+		(void) fprintf(stderr, "Client: rpma_flush() failed: %s\n",
 				ibv_wc_status_str(cmpl.op_status));
 		goto err_mr_remote_delete;
 	}
