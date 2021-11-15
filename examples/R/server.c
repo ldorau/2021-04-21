@@ -87,6 +87,12 @@ main(int argc, char *argv[])
 	strncpy(mr_ptr, INIT_STR, mr_size);
 	(void) printf("Server: the initial content of the server's persistent memory: %s\n",
 			mr_ptr);
+	/*
+	 * Flush the output buffer in order to assure the initial value
+	 * will be really close to the top of the console
+	 * in the case of mixing the client and the server output.
+	 */
+	(void) fflush(stdout);
 
 	/* create a peer configuration structure */
 	ret = rpma_peer_cfg_new(&pcfg);
