@@ -52,20 +52,20 @@ main(int argc, char *argv[])
 	pmem_ptr = pmem_map_file(path, 0 /* len */, 0 /* flags */,
 			0 /* mode */, &pmem_size, &is_pmem);
 	if (pmem_ptr == NULL) {
-		(void) fprintf(stderr, "pmem_map_file() for %s failed\n", path);
+		(void) fprintf(stderr, "Server: error: pmem_map_file() for %s failed\n", path);
 		return -1;
 	}
 
 	/* pmem is expected */
 	if (!is_pmem) {
-		(void) fprintf(stderr, "%s is not an actual PMEM\n", path);
+		(void) fprintf(stderr, "Server: error: %s is not an actual PMEM\n", path);
 		(void) pmem_unmap(pmem_ptr, pmem_size);
 		return -1;
 	}
 
 	/* check if PMem has minimum required size */
 	if (pmem_size < PMEM_MIN_SIZE) {
-		(void) fprintf(stderr, "%s too small (%zu < %u)\n",
+		(void) fprintf(stderr, "Server: error: %s too small (%zu < %u)\n",
 				path, pmem_size, PMEM_MIN_SIZE);
 		(void) pmem_unmap(pmem_ptr, pmem_size);
 		return -1;
@@ -85,7 +85,8 @@ main(int argc, char *argv[])
 
 	/* set and print the initial content */
 	strncpy(mr_ptr, INIT_STR, mr_size);
-	(void) printf("The initial content of the server's memory: %s\n", mr_ptr);
+	(void) printf("Server: the initial content of the server's persistent memory: %s\n",
+			mr_ptr);
 
 	/* create a peer configuration structure */
 	ret = rpma_peer_cfg_new(&pcfg);
@@ -171,7 +172,8 @@ main(int argc, char *argv[])
 	if (ret)
 		goto err_mr_dereg;
 
-	(void) printf("Received a new data from the client: %s\n", mr_ptr);
+	(void) printf("Server: read a new data from the server's persistent memory: %s\n",
+			mr_ptr);
 
 err_mr_dereg:
 	/* deregister the memory region */
