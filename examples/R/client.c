@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	size_t remote_size = 0;
 	size_t remote_offset = 0;
 	struct rpma_mr_local *local_mr = NULL;
-	struct rpma_completion cmpl;
+	struct ibv_wc wc;
 
 	/* RPMA resources */
 	struct rpma_peer_cfg *pcfg = NULL;
@@ -161,27 +161,33 @@ main(int argc, char *argv[])
 	if (ret)
 		goto err_mr_remote_delete;
 
+	/* get the connection's main CQ */
+	struct rpma_cq *cq = NULL;
+	ret = rpma_conn_get_cq(conn, &cq);
+	if (ret)
+		goto err_mr_remote_delete;
+
 	/* wait for the completion to be ready */
-	ret = rpma_conn_completion_wait(conn);
+	ret = rpma_cq_wait(cq);
 	if (ret)
 		goto err_mr_remote_delete;
 
 	/* wait for a completion of the RDMA read */
-	ret = rpma_conn_completion_get(conn, &cmpl);
+	ret = rpma_cq_get_wc(cq, 1, &wc, NULL);
 	if (ret)
 		goto err_mr_remote_delete;
 
-	if (cmpl.op_status != IBV_WC_SUCCESS) {
+	if (wc.status != IBV_WC_SUCCESS) {
 		ret = -1;
 		(void) fprintf(stderr, "Client: error: rpma_read() failed: %s\n",
-				ibv_wc_status_str(cmpl.op_status));
+				ibv_wc_status_str(wc.status));
 		goto err_mr_remote_delete;
 	}
 
-	if (cmpl.op != RPMA_OP_READ) {
+	if (wc.opcode != IBV_WC_RDMA_READ) {
 		ret = -1;
-		(void) fprintf(stderr, "Client: error: unexpected cmpl.op value (%d != %d)\n",
-				cmpl.op, RPMA_OP_READ);
+		(void) fprintf(stderr, "Client: error: unexpected wc.opcode value (%d != %d)\n",
+				wc.opcode, IBV_WC_RDMA_READ);
 		goto err_mr_remote_delete;
 	}
 
@@ -213,28 +219,33 @@ main(int argc, char *argv[])
 		goto err_mr_remote_delete;
 	}
 
+	/* get the connection's main CQ */
+	ret = rpma_conn_get_cq(conn, &cq);
+	if (ret)
+		goto err_mr_remote_delete;
+
 	/* wait for the completion to be ready */
-	ret = rpma_conn_completion_wait(conn);
+	ret = rpma_cq_wait(cq);
 	if (ret)
 		goto err_mr_remote_delete;
 
-	ret = rpma_conn_completion_get(conn, &cmpl);
+	/* wait for a completion of the RDMA read */
+	ret = rpma_cq_get_wc(cq, 1, &wc, NULL);
 	if (ret)
 		goto err_mr_remote_delete;
 
-	if (cmpl.op_context != FLUSH_ID) {
+	if (wc.wr_id != (uintptr_t)FLUSH_ID) {
 		ret = -1;
 		(void) fprintf(stderr,
-				"Client: error: unexpected cmpl.op_context value "
+				"Client: error: unexpected wc.wr_id value "
 				"(0x%" PRIXPTR " != 0x%" PRIXPTR ")\n",
-				(uintptr_t)cmpl.op_context,
-				(uintptr_t)FLUSH_ID);
+				(uintptr_t)wc.wr_id, (uintptr_t)FLUSH_ID);
 		goto err_mr_remote_delete;
 	}
-	if (cmpl.op_status != IBV_WC_SUCCESS) {
+	if (wc.status != IBV_WC_SUCCESS) {
 		ret = -1;
 		(void) fprintf(stderr, "Client: error: rpma_flush() failed: %s\n",
-				ibv_wc_status_str(cmpl.op_status));
+				ibv_wc_status_str(wc.status));
 		goto err_mr_remote_delete;
 	}
 
